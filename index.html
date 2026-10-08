@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0b0b0d">
+    <title>NIGHT SHOW</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #0b0b0d; color: #fff; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+        img, svg, video, iframe { max-width: 100%; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0b0b0d; }
+        ::-webkit-scrollbar-thumb { background: #ff9000; border-radius: 10px; }
+        header { background-color: #121215; border-bottom: 1px solid #22222a; padding: 10px 12px; padding-top: calc(10px + env(safe-area-inset-top)); position: sticky; top: 0; z-index: 100; }
+        .header-container { max-width: 1300px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        .nav-group { display: flex; align-items: center; gap: 4px; }
+        .icon-btn { background: none; border: none; color: #ff9000; cursor: pointer; padding: 6px; border-radius: 8px; min-width: 34px; min-height: 34px; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { background-color: #22222b; }
+        .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+        .logo { display: flex; align-items: center; font-size: clamp(16px, 3.5vw, 22px); font-weight: 900; cursor: pointer; text-transform: uppercase; flex: 1; justify-content: center; }
+        .logo-pocket { color: #fff; margin-right: 3px; }
+        .logo-story { background-color: #ff9000; color: #000; padding: 3px 8px; border-radius: 5px; }
+        .coin-wallet { display: flex; align-items: center; gap: 4px; background: linear-gradient(135deg, rgba(255, 204, 0, 0.18) 0%, rgba(255, 144, 0, 0.28) 100%); border: 1px solid rgba(255, 215, 0, 0.6); padding: 3px 8px 3px 6px; border-radius: 30px; font-weight: 900; font-size: clamp(11px, 2.2vw, 14px); color: #ffdc33; cursor: pointer; min-height: 32px; }
+        .coin-svg { width: 18px; height: 18px; animation: coinPulse 3s infinite; }
+        @keyframes coinPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .add-coin-btn { background: linear-gradient(135deg, #ffcc00, #ff9000); color: #000; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .category-btn { background: linear-gradient(135deg, rgba(255, 204, 0, 0.18) 0%, rgba(255, 144, 0, 0.28) 100%); border: 1px solid rgba(255, 215, 0, 0.6); color: #ffdc33; font-size: 11px; font-weight: 800; padding: 6px 10px; border-radius: 30px; cursor: pointer; display: flex; align-items: center; gap: 4px; min-height: 32px; }
+        .category-btn .cat-text { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dropdown { position: relative; }
+        .dropdown-menu { display: none; position: absolute; top: 100%; left: 0; margin-top: 10px; background-color: #18181f; border: 1px solid #2a2a36; border-radius: 12px; width: 220px; z-index: 200; max-height: 320px; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.8); padding: 6px; }
+        .dropdown-menu.show { display: block; }
+        .dropdown-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; color: #d1d1d6; text-decoration: none; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 8px; }
+        .dropdown-item:hover { background-color: rgba(255, 144, 0, 0.1); color: #ff9000; }
+        .dropdown-item.active { background-color: rgba(255, 144, 0, 0.15); color: #ff9000; }
+        .dropdown-item .check { color: #00e676; }
+        .search-bar-box { display: none; max-width: 1300px; margin: 10px auto 0; }
+        .search-bar-box.show { display: block; }
+        .search-input { width: 100%; padding: 11px 16px; background-color: #1a1a22; border: 1px solid #2e2e3d; border-radius: 20px; color: #fff; font-size: 14px; outline: none; }
+        .drawer-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.8); z-index: 300; }
+        .drawer-overlay.show { display: block; }
+        .drawer-content { width: min(300px, 85vw); height: 100%; background: linear-gradient(180deg, #121215 0%, #0b0b0d 100%); border-right: 1px solid #22222a; padding: 20px; padding-top: calc(20px + env(safe-area-inset-top)); display: flex; flex-direction: column; overflow-y: auto; }
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #22222a; }
+        .drawer-link { display: flex; align-items: center; gap: 14px; color: #b0b0c0; text-decoration: none; padding: 14px 16px; border-radius: 12px; font-weight: 600; margin-bottom: 6px; font-size: 14px; border-left: 4px solid transparent; }
+        .drawer-link:hover, .drawer-link.active { background-color: rgba(255, 144, 0, 0.08); color: #ff9000; }
+        .drawer-link.active { border-left-color: #ff9000; }
+        .drawer-link .icon { font-size: 18px; width: 24px; text-align: center; }
+        main { max-width: 1300px; width: 100%; margin: 0 auto; padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 24px); flex: 1; }
+        .hero-banner { background: linear-gradient(135deg, #1a1a22 0%, #101015 100%); border: 1px solid #282836; border-radius: 16px; padding: clamp(16px, 3vw, 24px); margin-bottom: 24px; }
+        .hero-badge { display: inline-block; background-color: rgba(255, 144, 0, 0.15); color: #ff9000; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin-bottom: 10px; }
+        .hero-title { font-size: clamp(18px, 4vw, 24px); font-weight: 800; margin-bottom: 6px; }
+        .hero-desc { color: #9a9ab0; font-size: 13px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 10px; flex-wrap: wrap; }
+        .section-title { font-size: clamp(16px, 3vw, 20px); font-weight: 700; }
+        .section-actions { display: flex; align-items: center; gap: 8px; }
+        .video-count { background-color: #1e1e26; color: #ff9000; font-size: 12px; padding: 4px 10px; border-radius: 12px; border: 1px solid #2e2e3a; }
+        .clear-history-btn { background: rgba(255, 77, 77, 0.1); border: 1px solid rgba(255, 77, 77, 0.3); color: #ff4d4d; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; display: none; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+        @media (max-width: 640px) { .video-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; } }
+        .video-card { background-color: #15151a; border: 1px solid #242430; border-radius: 12px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: transform 0.2s; }
+        .video-card:hover { transform: translateY(-3px); border-color: #ff9000; }
+        .thumb-box { position: relative; width: 100%; padding-top: 56.25%; background-color: #1a1a22; }
+        .thumb-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .play-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; }
+        .play-circle { width: 44px; height: 44px; background-color: #ff9000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .card-body { padding: 12px; display: flex; flex-direction: column; flex: 1; }
+        .video-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-meta { display: flex; justify-content: space-between; font-size: 11px; color: #7a7a8c; }
+        .cost-badge { position: absolute; top: 8px; left: 8px; background-color: rgba(0,0,0,0.85); border: 1px solid #ffcc00; color: #ffcc00; padding: 3px 8px; border-radius: 6px; font-weight: 800; font-size: 12px; z-index: 10; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.85); z-index: 999; align-items: center; justify-content: center; padding: 16px; opacity: 0; transition: opacity 0.25s; }
+        .modal-overlay.show { display: flex; opacity: 1; }
+        .info-modal-card { background-color: #141419; border: 1px solid #282836; border-radius: 16px; width: 100%; max-width: 440px; padding: 24px; max-height: calc(100vh - 32px); overflow-y: auto; position: relative; }
+        .info-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #22222a; font-size: 18px; font-weight: 800; }
+        .close-btn { background: transparent; border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; }
+        .modal-container { width: 100vw; height: 100vh; background: #000; position: relative; display: flex; flex-direction: column; }
+        .player-box { position: relative; flex: 1; }
+        .player-box iframe { position: absolute; top: -60px; left: 0; width: 100%; height: calc(100% + 140px); border: none; }
+        .custom-control-bar { position: absolute; top: calc(16px + env(safe-area-inset-top)); right: 14px; display: flex; gap: 6px; background: rgba(18,18,22,0.85); padding: 5px 10px; border-radius: 30px; z-index: 9999; }
+        .fullscreen-btn { background: #ff9000; border: none; padding: 8px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; color: #000; }
+        .package-card { background-color: #1c1c24; border: 1px solid #2e2e3d; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; position: relative; overflow: hidden; gap: 10px; margin-bottom: 10px; }
+        .package-card:hover { border-color: #ff9000; }
+        .package-card.special { border-color: #00e676; background: linear-gradient(135deg, #1c2b22 0%, #1c1c24 100%); }
+        .package-card.popular { border-color: #ff9000; }
+        .package-badge { position: absolute; top: 0; right: 0; background-color: #ff9000; color: #000; font-size: 9px; padding: 3px 8px; border-bottom-left-radius: 8px; font-weight: 800; }
+        .package-badge.green { background-color: #00e676; }
+        .package-btn { background-color: #ff9000; color: #000; border: none; padding: 9px 16px; border-radius: 20px; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .package-btn.green-btn { background-color: #00e676; }
+        .profile-action-btn { width: 100%; padding: 13px; border-radius: 25px; border: none; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+        .profile-action-btn.primary { background-color: #ff9000; color: #000; }
+        .profile-action-btn.secondary { background-color: #22222b; color: #fff; border: 1px solid #2e2e3d; }
+        .checkout-box { text-align: center; }
+        .timer-badge { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; padding: 8px 16px; border-radius: 30px; font-weight: 600; font-size: 1.05rem; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 15px; border: 1px solid rgba(255, 77, 77, 0.2); }
+        .qr-wrapper { margin: 1.2rem 0; display: flex; justify-content: center; }
+        #qrcode { background: #fff; padding: 12px; border-radius: 16px; display: inline-block; }
+        .bill { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 14px 16px; margin: 1.2rem 0; text-align: left; border: 1px solid #1f2937; }
+        .bill .row { display: flex; justify-content: space-between; margin-bottom: 10px; color: #8b9bb4; font-size: 0.92rem; }
+        .bill .total { color: #00e676; font-weight: 700; font-size: 1.15rem; border-top: 1px dashed #334155; padding-top: 12px; margin-top: 12px; }
+        .status-pulse { font-weight: 500; color: #8b9bb4; margin-top: 1.2rem; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .pulse-dot { width: 8px; height: 8px; background: #00e676; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0,230,118,0.3); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0,0,0,0); } 100% { transform: scale(0.95); } }
+        #toastContainer { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); right: 16px; left: 16px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; align-items: flex-end; }
+        @media (min-width: 640px) { #toastContainer { left: auto; right: 24px; } }
+        .toast { pointer-events: auto; background-color: #1a1a22; color: #fff; border-left: 4px solid #ff9000; border-radius: 8px; padding: 12px 16px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.7); display: flex; align-items: center; gap: 10px; animation: toastIn 0.3s; max-width: 100%; word-break: break-word; }
+        .toast.success { border-left-color: #00e676; }
+        .toast.error { border-left-color: #ff4d4d; }
+        .toast.info { border-left-color: #3b82f6; }
+        @keyframes toastIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        #loginScreenOverlay { position: fixed; inset: 0; background-color: #0b0b0d; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .coin-history-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a22; border: 1px solid #2e2e3d; border-radius: 10px; margin-bottom: 8px; }
+        .ch-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .ch-icon.purchase { background: rgba(0, 230, 118, 0.15); }
+        .ch-icon.referral { background: rgba(255, 144, 0, 0.15); }
+        .ch-icon.spend { background: rgba(255, 77, 77, 0.15); }
+        .ch-icon.signup { background: rgba(100, 150, 255, 0.15); }
+        .ch-icon.coupon { background: rgba(168, 85, 247, 0.15); }
+        .ch-details { flex: 1; min-width: 0; }
+        .ch-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; }
+        .ch-time { font-size: 11px; color: #7a7a8c; }
+        .ch-amount { font-size: 14px; font-weight: 800; white-space: nowrap; }
+        .ch-amount.plus { color: #00e676; }
+        .ch-amount.minus { color: #ff4d4d; }
+        #broadcastBanner { display: none; position: fixed; top: calc(60px + env(safe-area-inset-top)); left: 16px; right: 16px; background: linear-gradient(135deg, #ff9000, #ffcc00); color: #000; padding: 14px 18px; border-radius: 14px; z-index: 500; box-shadow: 0 10px 30px rgba(255,144,0,0.4); animation: broadcastIn 0.4s; font-weight: 700; font-size: 13px; align-items: center; gap: 10px; }
+        @media (min-width: 640px) { #broadcastBanner { left: auto; right: 24px; max-width: 380px; } }
+        #broadcastBanner .close-bc { background: rgba(0,0,0,0.15); border: none; color: #000; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-weight: 900; flex-shrink: 0; }
+        @keyframes broadcastIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .ad-banner { background: linear-gradient(135deg, #1a1a22, #101015); border: 1px dashed #ff9000; border-radius: 12px; padding: 16px; margin: 16px 0; text-align: center; }
+        .ad-banner img { max-height: 90px; border-radius: 8px; }
+        .ad-banner .ad-label { font-size: 9px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        @media (max-width: 480px) { .logo { font-size: 15px; } .category-btn .cat-text { max-width: 70px; font-size: 10px; } .hero-desc { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div id="loginScreenOverlay">
+        <div class="logo" style="font-size: clamp(30px, 9vw, 44px); margin-bottom: 10px;">
+            <span class="logo-pocket">NIGHT</span><span class="logo-story">SHOW</span>
+        </div>
+        <p style="color:#9a9ab0; font-size:14px; margin-bottom: 30px;">Please login to access video stories</p>
+        <button onclick="handleAuth()" class="profile-action-btn primary" style="width: auto; padding: 14px 30px; font-size: 15px;">👤 Login with Google</button>
+    </div>
+
+    <div id="broadcastBanner">
+        <span style="flex:1;" id="broadcastText">Message</span>
+        <button class="close-bc" onclick="document.getElementById('broadcastBanner').style.display='none'">✕</button>
+    </div>
+
+    <header>
+        <div class="header-container">
+            <div class="nav-group">
+                <button onclick="toggleDrawer()" class="icon-btn"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+                <div class="dropdown">
+                    <button onclick="toggleDropdown()" class="category-btn" id="categoryBtn"><span class="cat-text">📂 Categories</span></button>
+                    <div id="filterDropdown" class="dropdown-menu"></div>
+                </div>
+            </div>
+            <div class="logo" onclick="switchTab('home')"><span class="logo-pocket">NIGHT</span><span class="logo-story">SHOW</span></div>
+            <div class="nav-group">
+                <div class="coin-wallet" onclick="openCoinModal()">
+                    <svg viewBox="0 0 100 100" class="coin-svg"><circle cx="50" cy="50" r="48" fill="#FFD700"/><circle cx="50" cy="50" r="42" fill="#E69900"/><text x="50" y="67" font-family="Arial" font-size="52" font-weight="900" fill="#fff" text-anchor="middle">$</text></svg>
+                    <span id="userCoins">0</span>
+                    <span class="add-coin-btn">+</span>
+                </div>
+                <button onclick="toggleSearch()" class="icon-btn"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></button>
+            </div>
+        </div>
+        <div id="searchBarBox" class="search-bar-box"><input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search videos..." class="search-input"></div>
+    </header>
+
+    <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()">
+        <div class="drawer-content" onclick="event.stopPropagation()">
+            <div class="drawer-header">
+                <div class="logo"><span class="logo-pocket">NIGHT</span><span class="logo-story">SHOW</span></div>
+                <button onclick="toggleDrawer()" class="close-btn">✕</button>
+            </div>
+            <a href="javascript:void(0)" onclick="switchTab('home'); toggleDrawer();" id="nav-home" class="drawer-link active"><span class="icon">🏠</span> Home</a>
+            <a href="javascript:void(0)" onclick="openInfoModal('profile'); toggleDrawer();" class="drawer-link"><span class="icon">👤</span> My Profile</a>
+            <a href="javascript:void(0)" onclick="switchTab('history'); toggleDrawer();" id="nav-history" class="drawer-link"><span class="icon">📜</span> Watch History</a>
+            <a href="javascript:void(0)" onclick="openCoinModal(); toggleDrawer();" class="drawer-link" style="color:#ffcc00;"><span class="icon">🪙</span> Buy Coins</a>
+            <a href="javascript:void(0)" onclick="openCoinHistory(); toggleDrawer();" class="drawer-link" style="color:#00e676;"><span class="icon">📊</span> Coin History</a>
+            <a href="javascript:void(0)" onclick="openCouponModal(); toggleDrawer();" class="drawer-link" style="color:#a855f7;"><span class="icon">🏷️</span> Redeem Coupon</a>
+            <a href="javascript:void(0)" onclick="openSupportModal(); toggleDrawer();" class="drawer-link" style="color:#22d3ee;"><span class="icon">💬</span> Support</a>
+            <a href="javascript:void(0)" onclick="openInfoModal('refer'); toggleDrawer();" class="drawer-link"><span class="icon">🎁</span> Refer & Earn</a>
+            <a href="javascript:void(0)" onclick="openInfoModal('about'); toggleDrawer();" class="drawer-link"><span class="icon">ℹ️</span> About Us</a>
+        </div>
+    </div>
+
+    <main>
+        <div class="hero-banner">
+            <span class="hero-badge">NIGHT SHOW PORTAL</span>
+            <h1 class="hero-title" id="pageTitle">Watch Video Online</h1>
+            <p class="hero-desc" id="pageSubTitle">Videos cost 2 coins to unlock.</p>
+        </div>
+
+        <div id="adSlotTop" style="display:none;"></div>
+
+        <div class="section-header">
+            <h2 class="section-title" id="sectionHeading">Recent Uploads</h2>
+            <div class="section-actions">
+                <button id="clearHistoryBtn" class="clear-history-btn" onclick="clearWatchHistory()">🗑️ Clear All</button>
+                <span id="videoCountBadge" class="video-count" style="display:none;">0 Videos</span>
+            </div>
+        </div>
+        <div id="statusBox" style="text-align:center; padding:40px; color:#aaa; display:none;">Loading...</div>
+        <div id="videoGrid" class="video-grid"></div>
+    </main>
+
+    <div id="playerModal" class="modal-overlay" onclick="closePlayer()">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <div class="custom-control-bar">
+                <button onclick="toggleRotation()" class="fullscreen-btn">⛶ Full Screen</button>
+                <button onclick="closePlayer()" class="close-btn" style="background:#ff9000; color:#000;">✕</button>
+            </div>
+            <div class="player-box" id="playerBox"></div>
+        </div>
+    </div>
+
+    <div id="unlockModal" class="modal-overlay" onclick="closeUnlockModal()">
+        <div class="info-modal-card" style="text-align:center;" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom:8px;">Unlock Video Story</h3>
+            <p id="unlockVideoTitle" style="color:#ff9000; font-size:14px; margin-bottom:12px;"></p>
+            <p style="color:#aaa; font-size:13px;">Unlock for <strong style="color:#ffcc00;" id="unlockCostDisplay">2 Coins</strong>?</p>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="closeUnlockModal()" class="profile-action-btn secondary" style="margin-top:0;">Cancel</button>
+                <button id="confirmUnlockBtn" class="profile-action-btn primary" style="margin-top:0;">Unlock Now</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="coinModal" class="modal-overlay" onclick="closeCoinModal()">
+        <div class="info-modal-card" onclick="event.stopPropagation()">
+            <div class="info-modal-header"><div>🪙 Recharge Coins</div><button onclick="closeCoinModal()" class="close-btn">✕</button></div>
+            <p style="font-size:13px; color:#9a9ab0; margin-bottom:16px;">Select a pack:</p>
+            <div id="packageList"></div>
+        </div>
+    </div>
+
+    <div id="checkoutModal" class="modal-overlay" onclick="closeCheckoutModal()">
+        <div class="info-modal-card checkout-box" onclick="event.stopPropagation()">
+            <div class="info-modal-header" style="justify-content:center; border:none; margin-bottom:5px;">Secure UPI Checkout</div>
+            <p style="color:#8b9bb4; font-size:13px; margin-bottom:15px;" id="checkoutPackName">Recharging Coins</p>
+            <div class="timer-badge"><svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg><span id="timerDisplay">02:00</span></div>
+            <div class="qr-wrapper"><div id="qrcode"></div></div>
+            <p style="color:#8b9bb4; font-size:12px; margin-top:8px;">UPI: <strong id="currentUpiDisplay" style="color:#00e676;">Q070261555@ybl</strong></p>
+            <div class="bill">
+                <div class="row"><span>Amount</span> <span id="displayBase">₹0.00</span></div>
+                <div class="row"><span>Fee</span> <span id="displayFee">₹0.00</span></div>
+                <div class="row total"><span>Total</span> <span id="displayTotal">₹0.00</span></div>
+            </div>
+            <button class="profile-action-btn secondary" onclick="downloadQR()">📥 Download QR</button>
+            <button class="profile-action-btn secondary" style="margin-top:5px;" onclick="closeCheckoutModal()">Cancel</button>
+            <div id="checkoutStatus" class="status-pulse"><div class="pulse-dot"></div>Listening for payment...</div>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal-overlay" onclick="closeInfoModal()">
+        <div class="info-modal-card" onclick="event.stopPropagation()">
+            <div class="info-modal-header"><div id="infoModalTitle">Title</div><button onclick="closeInfoModal()" class="close-btn">✕</button></div>
+            <div id="infoModalBody" style="color:#aaa; font-size:14px; line-height:1.6;"></div>
+        </div>
+    </div>
+
+    <div id="coinHistoryModal" class="modal-overlay" onclick="closeCoinHistory()">
+        <div class="info-modal-card" onclick="event.stopPropagation()">
+            <div class="info-modal-header"><div>📊 Coin History</div><button onclick="closeCoinHistory()" class="close-btn">✕</button></div>
+            <div id="coinHistoryBody" style="max-height:55vh; overflow-y:auto;"></div>
+            <button id="clearCoinHistoryBtn" class="profile-action-btn" style="display:none; margin-top:15px; background-color:rgba(255,77,77,0.1); color:#ff4d4d; border:1px solid rgba(255,77,77,0.3);" onclick="clearCoinHistory()">🗑️ Clear All</button>
+        </div>
+    </div>
+
+    <div id="couponModal" class="modal-overlay" onclick="closeCouponModal()">
+        <div class="info-modal-card" onclick="event.stopPropagation()">
+            <div class="info-modal-header"><div>🏷️ Redeem Coupon</div><button onclick="closeCouponModal()" class="close-btn">✕</button></div>
+            <p style="color:#9a9ab0; font-size:13px; margin-bottom:15px;">Enter coupon code to get free coins</p>
+            <input type="text" id="couponInput" placeholder="Enter code (e.g. SAVE100)" style="width:100%; padding:14px; background:#1a1a22; border:1px solid #2e2e3d; border-radius:10px; color:#fff; font-size:16px; text-align:center; text-transform:uppercase; letter-spacing:2px; font-weight:700; outline:none; margin-bottom:15px;">
+            <button class="profile-action-btn primary" onclick="redeemCoupon()">✓ Redeem Now</button>
+            <div id="couponResult" style="margin-top:15px; text-align:center; font-size:13px;"></div>
+        </div>
+    </div>
+
+    <div id="supportModal" class="modal-overlay" onclick="closeSupportModal()">
+        <div class="info-modal-card" onclick="event.stopPropagation()">
+            <div class="info-modal-header"><div>💬 Support Tickets</div><button onclick="closeSupportModal()" class="close-btn">✕</button></div>
+            <div style="background:#1a1a22; border-radius:10px; padding:14px; margin-bottom:15px;">
+                <p style="font-size:13px; font-weight:700; margin-bottom:10px; color:#22d3ee;">🎫 New Ticket</p>
+                <input type="text" id="ticketSubject" placeholder="Subject" style="width:100%; padding:10px; background:#0b0b0d; border:1px solid #2e2e3d; border-radius:8px; color:#fff; font-size:13px; margin-bottom:8px; outline:none;">
+                <textarea id="ticketMessage" placeholder="Describe your issue..." style="width:100%; padding:10px; background:#0b0b0d; border:1px solid #2e2e3d; border-radius:8px; color:#fff; font-size:13px; min-height:80px; resize:vertical; outline:none; font-family:inherit;"></textarea>
+                <button class="profile-action-btn primary" style="margin-top:10px;" onclick="submitTicket()">📤 Submit Ticket</button>
+            </div>
+            <p style="font-size:13px; font-weight:700; margin-bottom:10px;">📋 My Tickets</p>
+            <div id="ticketsList" style="max-height:300px; overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        const CONFIG = {
+            API_KEY: "AIzaSyBxRvzxcBpdnFvKYRLg994RDB0Oek0M5aE",
+            FOLDERS: [
+                { name: "FULL HD", link: "https://drive.google.com/drive/folders/1L8f_DFeEfQs4sHyNVNu95VctFAI4q5QS" },
+                { name: "VIRAIL MMS", link: "https://drive.google.com/drive/folders/17GGfelNrx8iLD40-ycL7BL1h7psPUtvV" }
+            ]
+        };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDU5kvbYJSq-XppxR4-LzNVjDX1mELq4gw",
+            authDomain: "upi-verification-5199a.firebaseapp.com",
+            databaseURL: "https://upi-verification-5199a-default-rtdb.firebaseio.com",
+            projectId: "upi-verification-5199a",
+            storageBucket: "upi-verification-5199a.firebasestorage.app",
+            messagingSenderId: "39067226112",
+            appId: "1:39067226112:web:9ad91c393ff7a466f488e5",
+            measurementId: "G-1XZ7DJX3PK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+        let SIGNUP_BONUS = 6;
+        let VIDEO_COST = 2;
+        let currentUpiId = "Q070261555@ybl";
+        let isFirstUpi = true, isFirstCost = true, isFirstBonus = true;
+        let userBlocked = false;
+
+        database.ref("settings/upiId").on("value", s => {
+            if(s.exists()) {
+                const n = s.val();
+                if(currentUpiId !== n && !isFirstUpi) showToast(`💳 UPI updated: ${n}`, 'success');
+                currentUpiId = n; isFirstUpi = false;
+                const el = document.getElementById('currentUpiDisplay');
+                if(el) el.innerText = currentUpiId;
+            }
+        });
+        database.ref("settings/videoCost").on("value", s => {
+            if(s.exists()) {
+                const n = parseInt(s.val());
+                if(VIDEO_COST !== n && !isFirstCost) { showToast(`💰 Video cost: ${n} coins`, 'info'); if(typeof applyFilters === 'function') applyFilters(); }
+                VIDEO_COST = n; isFirstCost = false;
+                const el = document.getElementById('unlockCostDisplay');
+                if(el) el.innerText = VIDEO_COST + ' Coins';
+            }
+        });
+        database.ref("settings/signupBonus").on("value", s => {
+            if(s.exists()) {
+                const n = parseInt(s.val());
+                if(SIGNUP_BONUS !== n && !isFirstBonus) showToast(`🎁 Signup bonus: ${n}`, 'info');
+                SIGNUP_BONUS = n; isFirstBonus = false;
+            }
+        });
+
+        database.ref("broadcast").on("value", (snap) => {
+            const bc = snap.val();
+            if(bc && bc.message) {
+                const seen = localStorage.getItem('ps_bc_seen');
+                if(seen !== String(bc.timestamp)) {
+                    document.getElementById('broadcastText').innerText = "📢 " + bc.message;
+                    document.getElementById('broadcastBanner').style.display = 'flex';
+                    localStorage.setItem('ps_bc_seen', String(bc.timestamp));
+                    setTimeout(() => { document.getElementById('broadcastBanner').style.display = 'none'; }, 15000);
+                }
+            }
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        if (refParam) { localStorage.setItem('pendingReferrer', refParam); window.history.replaceState({}, document.title, window.location.pathname); }
+
+        let referralListenerRef = null;
+        function setupReferralListener(userId) {
+            if (referralListenerRef) referralListenerRef.off();
+            referralListenerRef = database.ref('referralEarnings/' + userId);
+            referralListenerRef.on('value', (snap) => {
+                const e = snap.val();
+                if (e && e > 0) {
+                    userWallet.coins += e;
+                    updateWalletDisplay(userId);
+                    addCoinHistory('referral', e, `Referral bonus`, userId);
+                    showToast(`🎉 ${e} coins from referral!`, 'success');
+                    database.ref('referralEarnings/' + userId).remove();
+                }
+            });
+        }
+
+        auth.onAuthStateChanged((user) => {
+            const loginScreen = document.getElementById('loginScreenOverlay');
+            if (user) {
+                loginScreen.style.display = 'none';
+                
+                database.ref('blockedUsers/' + user.uid).on('value', (bSnap) => {
+                    userBlocked = bSnap.exists();
+                    if(userBlocked) {
+                        document.body.innerHTML = `<div style="position:fixed;inset:0;background:#0b0b0d;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999999;padding:20px;text-align:center;color:#fff;">
+                            <div style="font-size:60px;margin-bottom:20px;">🚫</div>
+                            <h1 style="color:#ff4d4d;margin-bottom:10px;">Account Blocked</h1>
+                            <p style="color:#9a9ab0;">Your account has been blocked by admin. Please contact support.</p>
+                        </div>`;
+                    }
+                });
+                
+                const isExisting = loadWallet(user.uid);
+                updateWalletDisplay(user.uid);
+                loadCoinHistory(user.uid);
+
+                if (!isExisting) {
+                    userWallet.coins = SIGNUP_BONUS;
+                    updateWalletDisplay(user.uid);
+                    addCoinHistory('signup', SIGNUP_BONUS, 'Signup bonus received 🎉', user.uid);
+                    showToast(`🎁 Welcome! ${SIGNUP_BONUS} coins credited!`, 'success');
+                    saveWallet(user.uid);
+                }
+
+                const pendingRef = localStorage.getItem('pendingReferrer');
+                if (pendingRef && pendingRef !== user.uid) {
+                    database.ref('referrals/' + user.uid).once('value').then(snap => {
+                        if (!snap.exists()) {
+                            database.ref('referrals/' + user.uid).set({ referrerId: pendingRef, bonusPaid: false, createdAt: firebase.database.ServerValue.TIMESTAMP });
+                            showToast('🎁 Referral applied!', 'success');
+                        }
+                        localStorage.removeItem('pendingReferrer');
+                    });
+                } else { localStorage.removeItem('pendingReferrer'); }
+                
+                setupReferralListener(user.uid);
+                loadTickets(user.uid);
+                
+            } else {
+                loginScreen.style.display = 'flex';
+                userWallet = { coins: 0, unlockedVideos: [] };
+                coinHistory = [];
+                updateWalletDisplay('guest');
+                loadCoinHistory('guest');
+                if (referralListenerRef) { referralListenerRef.off(); referralListenerRef = null; }
+            }
+        });
+
+        function handleAuth() {
+            if (auth.currentUser) {
+                auth.signOut().then(() => { showToast('Logged out', 'info'); closeInfoModal(); });
+            } else {
+                auth.signInWithPopup(googleProvider)
+                    .then(() => { showToast('Login Successful!', 'success'); closeInfoModal(); })
+                    .catch(e => showToast(e.message, 'error'));
+            }
+        }
+
+        let allVideos = [], currentTab = 'home', pendingUnlockVideo = null, activeFilterIndex = -1, searchQuery = '';
+        let userWallet = { coins: 0, unlockedVideos: [] };
+        let coinHistory = [];
+        let paymentTimer = null, backendTimer = null, currentPaymentRefKey = null;
+
+        function saveWallet(uid) { 
+            if (!uid) uid = 'guest';
+            try { localStorage.setItem('ps_userWallet_' + uid, JSON.stringify(userWallet)); } catch (e) {}
+            if (uid !== 'guest') {
+                database.ref('userWallets/' + uid).set({
+                    coins: userWallet.coins,
+                    unlockedVideos: userWallet.unlockedVideos || [],
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+        }
+        function loadWallet(uid) { 
+            if (!uid) uid = 'guest';
+            try { const s = localStorage.getItem('ps_userWallet_' + uid); if (s) { userWallet = JSON.parse(s); return true; } } catch (e) {} 
+            return false;
+        }
+        function updateWalletDisplay(uid) { document.getElementById('userCoins').innerText = userWallet.coins; saveWallet(uid); }
+        function saveCoinHistory(uid) { try { localStorage.setItem('ps_coinHistory_' + (uid||'guest'), JSON.stringify(coinHistory)); } catch(e) {} }
+        function loadCoinHistory(uid) { 
+            try { const s = localStorage.getItem('ps_coinHistory_' + (uid||'guest')); coinHistory = s ? JSON.parse(s) : []; } catch(e) { coinHistory = []; } 
+        }
+        function addCoinHistory(type, amount, description, uid) {
+            coinHistory.unshift({ type, amount, description, timestamp: Date.now() });
+            if (coinHistory.length > 200) coinHistory = coinHistory.slice(0, 200);
+            saveCoinHistory(uid);
+        }
+        function openCoinHistory() {
+            const body = document.getElementById('coinHistoryBody'), clearBtn = document.getElementById('clearCoinHistoryBtn');
+            if (!coinHistory.length) { body.innerHTML = '<div style="text-align:center;padding:40px;color:#666;">No coin history yet.</div>'; clearBtn.style.display = 'none'; }
+            else {
+                clearBtn.style.display = 'flex';
+                body.innerHTML = coinHistory.map(item => {
+                    const icons = { purchase: '💳', referral: '🎁', spend: '🎬', signup: '✨', coupon: '🏷️' };
+                    const icon = icons[item.type] || '💰';
+                    const sign = item.type === 'spend' ? '-' : '+';
+                    const cls = item.type === 'spend' ? 'minus' : 'plus';
+                    const d = new Date(item.timestamp);
+                    const timeStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                    return `<div class="coin-history-item"><div class="ch-icon ${item.type}">${icon}</div><div class="ch-details"><div class="ch-title">${item.description}</div><div class="ch-time">${timeStr}</div></div><div class="ch-amount ${cls}">${sign}${item.amount} 🪙</div></div>`;
+                }).join('');
+            }
+            document.getElementById('coinHistoryModal').classList.add('show');
+        }
+        function clearCoinHistory() {
+            if (!coinHistory.length) { showToast('Already empty!', 'info'); return; }
+            if (confirm('Clear all Coin History?')) {
+                coinHistory = []; saveCoinHistory(auth.currentUser ? auth.currentUser.uid : 'guest'); openCoinHistory();
+                showToast('Coin history cleared!', 'success');
+            }
+        }
+        function closeCoinHistory() { document.getElementById('coinHistoryModal').classList.remove('show'); }
+
+        function openCouponModal() { document.getElementById('couponModal').classList.add('show'); document.getElementById('couponResult').innerHTML = ''; }
+        function closeCouponModal() { document.getElementById('couponModal').classList.remove('show'); }
+        function redeemCoupon() {
+            const code = document.getElementById('couponInput').value.trim().toUpperCase();
+            const resultEl = document.getElementById('couponResult');
+            if (!code) { resultEl.innerHTML = '<span style="color:#ff4d4d;">Enter a code</span>'; return; }
+            if (!auth.currentUser) { resultEl.innerHTML = '<span style="color:#ff4d4d;">Login required</span>'; return; }
+            resultEl.innerHTML = '<span style="color:#8b9bb4;">Checking...</span>';
+            const uid = auth.currentUser.uid;
+            database.ref('coupons/' + code).once('value').then(snap => {
+                if (!snap.exists()) { resultEl.innerHTML = '<span style="color:#ff4d4d;">❌ Invalid coupon code</span>'; return; }
+                const coupon = snap.val();
+                if (coupon.expiry && Date.now() > coupon.expiry) { resultEl.innerHTML = '<span style="color:#ff4d4d;">❌ Coupon expired</span>'; return; }
+                if (coupon.maxUses && (coupon.usedCount || 0) >= coupon.maxUses) { resultEl.innerHTML = '<span style="color:#ff4d4d;">❌ Coupon limit reached</span>'; return; }
+                database.ref('couponUses/' + code + '/' + uid).once('value').then(uSnap => {
+                    if (uSnap.exists()) { resultEl.innerHTML = '<span style="color:#ff4d4d;">❌ Already used</span>'; return; }
+                    userWallet.coins += coupon.coins;
+                    updateWalletDisplay(uid);
+                    addCoinHistory('coupon', coupon.coins, `Coupon: ${code}`, uid);
+                    database.ref('couponUses/' + code + '/' + uid).set({ usedAt: firebase.database.ServerValue.TIMESTAMP });
+                    database.ref('coupons/' + code + '/usedCount').transaction(c => (c || 0) + 1);
+                    resultEl.innerHTML = `<span style="color:#00e676;">✅ ${coupon.coins} coins added!</span>`;
+                    showToast(`🏷️ ${coupon.coins} coins from coupon!`, 'success');
+                    document.getElementById('couponInput').value = '';
+                });
+            });
+        }
+
+        function openSupportModal() { document.getElementById('supportModal').classList.add('show'); }
+        function closeSupportModal() { document.getElementById('supportModal').classList.remove('show'); }
+        function submitTicket() {
+            if (!auth.currentUser) { showToast('Login required', 'error'); return; }
+            const subj = document.getElementById('ticketSubject').value.trim();
+            const msg = document.getElementById('ticketMessage').value.trim();
+            if (!subj || !msg) { showToast('Fill both fields', 'error'); return; }
+            const uid = auth.currentUser.uid;
+            database.ref('tickets').push({
+                userId: uid,
+                email: auth.currentUser.email || '',
+                subject: subj,
+                message: msg,
+                status: 'open',
+                createdAt: firebase.database.ServerValue.TIMESTAMP
+            }).then(() => {
+                showToast('Ticket submitted!', 'success');
+                document.getElementById('ticketSubject').value = '';
+                document.getElementById('ticketMessage').value = '';
+            });
+        }
+        function loadTickets(uid) {
+            database.ref('tickets').orderByChild('userId').equalTo(uid).on('value', snap => {
+                const box = document.getElementById('ticketsList');
+                if (!snap.exists()) { box.innerHTML = '<p style="color:#666;font-size:12px;text-align:center;padding:15px;">No tickets yet</p>'; return; }
+                const arr = [];
+                snap.forEach(c => arr.push({ key: c.key, ...c.val() }));
+                arr.sort((a,b) => b.createdAt - a.createdAt);
+                box.innerHTML = arr.map(t => {
+                    const d = new Date(t.createdAt).toLocaleDateString();
+                    const stColor = t.status === 'resolved' ? '#00e676' : t.status === 'replied' ? '#ff9000' : '#3b82f6';
+                    return `<div style="background:#0b0b0d;border:1px solid #2e2e3d;border-radius:10px;padding:12px;margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                            <strong style="font-size:13px;color:#fff;">${t.subject}</strong>
+                            <span style="font-size:10px;color:${stColor};text-transform:uppercase;font-weight:800;">${t.status}</span>
+                        </div>
+                        <p style="font-size:12px;color:#8b9bb4;margin-bottom:6px;">${t.message}</p>
+                        ${t.reply ? `<div style="background:#1a1a22;padding:8px;border-radius:6px;margin-top:6px;border-left:3px solid #00e676;"><p style="font-size:11px;color:#00e676;font-weight:700;margin-bottom:3px;">Admin Reply:</p><p style="font-size:12px;color:#fff;">${t.reply}</p></div>` : ''}
+                        <p style="font-size:10px;color:#666;margin-top:6px;">${d}</p>
+                    </div>`;
+                }).join('');
+            });
+        }
+
+        database.ref('ads/active').on('value', snap => {
+            const ads = snap.val();
+            const slot = document.getElementById('adSlotTop');
+            if (ads && ads.imageUrl) {
+                slot.style.display = 'block';
+                slot.innerHTML = `<div class="ad-banner"><p class="ad-label">Sponsored</p><a href="${ads.linkUrl||'#'}" target="_blank"><img src="${ads.imageUrl}" alt="Ad"></a></div>`;
+            } else { slot.style.display = 'none'; slot.innerHTML = ''; }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => { updateWalletDisplay('guest'); fetchVideos(); });
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(20px)'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function toggleDrawer() { document.getElementById('drawerOverlay').classList.toggle('show'); }
+        function toggleDropdown() { document.getElementById('filterDropdown').classList.toggle('show'); }
+        function toggleSearch() { document.getElementById('searchBarBox').classList.toggle('show'); }
+        function openCoinModal() { renderPackages(); document.getElementById('coinModal').classList.add('show'); }
+        function closeCoinModal() { document.getElementById('coinModal').classList.remove('show'); }
+
+        function renderPackages() {
+            database.ref('settings/packages').once('value').then(snap => {
+                let packs = snap.val();
+                if (!packs) {
+                    packs = [
+                        { coins: 10, price: 19, name: 'Starter', badge: 'First Offer', badgeClass: 'green' },
+                        { coins: 25, price: 49, name: 'Basic' },
+                        { coins: 50, price: 99, name: 'Standard' },
+                        { coins: 100, price: 1, name: 'Mega Value', badge: 'Best Value' }
+                    ];
+                }
+                const html = packs.map(p => `
+                    <div class="package-card ${p.badgeClass === 'green' ? 'special' : ''} ${p.badge === 'Best Value' ? 'popular' : ''}" onclick="initiatePayment(${p.coins}, ${p.price}, '₹${p.price} ${p.name}')">
+                        ${p.badge ? `<span class="package-badge ${p.badgeClass||''}">${p.badge}</span>` : ''}
+                        <div><div style="font-weight:800;font-size:15px;">${p.coins} Coins</div><div style="font-size:11px;color:#9a9ab0;">${p.name}</div></div>
+                        <button class="package-btn ${p.badgeClass === 'green' ? 'green-btn' : ''}">₹${p.price}</button>
+                    </div>
+                `).join('');
+                document.getElementById('packageList').innerHTML = html;
+            });
+        }
+
+        function openInfoModal(type) {
+            let title = '', body = '';
+            if (type === 'profile') {
+                title = '👤 My Profile';
+                const user = auth.currentUser;
+                if (user) {
+                    const dn = user.displayName || 'Night Show User';
+                    const photoURL = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(dn)}&background=ff9000&color=000&size=100`;
+                    body = `<div style="text-align:center;margin-bottom:20px;"><img src="${photoURL}" style="width:80px;height:80px;border-radius:50%;border:3px solid #ff9000;object-fit:cover;margin-bottom:10px;"><h3>${dn}</h3></div>
+                        <div style="background:#1a1a22;border-radius:10px;padding:15px;margin-bottom:20px;border:1px solid #2e2e3d;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid #22222a;padding-bottom:8px;"><span style="color:#8b9bb4;font-size:13px;">Email</span><span style="font-weight:600;font-size:13px;word-break:break-all;">${user.email}</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#8b9bb4;font-size:13px;">User ID</span><span style="font-weight:600;font-size:12px;">${user.uid.substring(0,16)}...</span></div></div>
+                        <button onclick="handleAuth();" class="profile-action-btn" style="background:#ff4d4d;color:#fff;"> Logout</button>`;
+                } else body = '<p>Please login.</p>';
+                
+                document.getElementById('infoModalTitle').innerText = title;
+                document.getElementById('infoModalBody').innerHTML = body;
+                document.getElementById('infoModal').classList.add('show');
+                
+            } else if (type === 'refer') {
+                title = '🎁 Refer & Earn';
+                const user = auth.currentUser;
+                if (!user) {
+                    body = '<p style="text-align:center;color:#8b9bb4;">Please login to get your referral link.</p>';
+                    document.getElementById('infoModalTitle').innerText = title;
+                    document.getElementById('infoModalBody').innerHTML = body;
+                    document.getElementById('infoModal').classList.add('show');
+                    return;
+                }
+                
+                const refLink = window.location.origin + window.location.pathname + '?ref=' + user.uid;
+                
+                document.getElementById('infoModalTitle').innerText = title;
+                document.getElementById('infoModalBody').innerHTML = '<div style="text-align:center;padding:30px;"><div class="pulse-dot" style="display:inline-block;width:12px;height:12px;background:#ff9000;border-radius:50%;animation:pulse 1.5s infinite;"></div></div>';
+                document.getElementById('infoModal').classList.add('show');
+                
+                database.ref('settings/packages').once('value').then(snap => {
+                    let packs = snap.val();
+                    if (!packs) {
+                        packs = [
+                            { coins: 10, price: 19, name: 'Starter' },
+                            { coins: 25, price: 49, name: 'Basic' },
+                            { coins: 50, price: 99, name: 'Standard' },
+                            { coins: 100, price: 1, name: 'Mega Value' }
+                        ];
+                    }
+                    
+                    const earningsRows = packs.map(p => {
+                        const yourBonus = Math.floor(p.coins * 0.5);
+                        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#0b0b0d;border:1px solid #2e2e3d;border-radius:10px;margin-bottom:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:20px;">🪙</span>
+                                <div>
+                                    <div style="font-weight:700;font-size:13px;color:#fff;">Friend buys ${p.coins} coins</div>
+                                    <div style="font-size:11px;color:#8b9bb4;">for ₹${p.price}</div>
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:#00e676;font-weight:900;font-size:16px;">+${yourBonus}</div>
+                                <div style="font-size:9px;color:#8b9bb4;text-transform:uppercase;letter-spacing:1px;">YOU EARN</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    
+                    body = `
+                        <div style="text-align:center;margin-bottom:18px;">
+                            <div style="font-size:44px;margin-bottom:6px;">🎁</div>
+                            <h3 style="font-size:16px;margin-bottom:4px;">Share & Earn <span style="color:#00e676;">50% Bonus</span></h3>
+                            <p style="font-size:12px;color:#8b9bb4;">Har purchase par aapko aadhe coins milenge</p>
+                        </div>
+                        
+                        <div style="background:#1a1a22;border-radius:10px;padding:12px;margin-bottom:15px;border:1px solid #2e2e3d;">
+                            <p style="font-size:11px;color:#8b9bb4;margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🔗 Your Referral Link</p>
+                            <div style="word-break:break-all;font-size:11px;color:#ff9000;font-family:monospace;background:#0b0b0d;padding:10px;border-radius:8px;border:1px solid #22222a;">${refLink}</div>
+                            <button onclick="copyReferralLink('${refLink}')" class="profile-action-btn primary" style="margin-top:10px;">📋 Copy Link</button>
+                        </div>
+                        
+                        <p style="font-size:12px;color:#8b9bb4;margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">💰 Aap Kitna Kamayenge?</p>
+                        
+                        <div style="max-height:280px;overflow-y:auto;margin-bottom:10px;">${earningsRows}</div>
+                        
+                        <div style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.25);border-radius:10px;padding:12px;text-align:center;">
+                            <p style="font-size:11px;color:#00e676;font-weight:600;">💡 Bonus aapke wallet me instantly add hoga jab friend payment karega</p>
+                        </div>
+                    `;
+                    
+                    document.getElementById('infoModalBody').innerHTML = body;
+                }).catch(err => {
+                    document.getElementById('infoModalBody').innerHTML = '<p style="text-align:center;color:#ff4d4d;">Error loading: ' + err.message + '</p>';
+                });
+                
+            } else if (type === 'about') {
+                title = 'ℹ️ About Us';
+                body = `<p>NIGHT SHOW is a premium video streaming platform.</p><p style="margin-top:10px;">Version: 2.0.0</p>`;
+                
+                document.getElementById('infoModalTitle').innerText = title;
+                document.getElementById('infoModalBody').innerHTML = body;
+                document.getElementById('infoModal').classList.add('show');
+            }
+        }
+
+        function copyReferralLink(link) {
+            navigator.clipboard.writeText(link).then(() => showToast('Link copied!', 'success'))
+            .catch(() => { const t = document.createElement('textarea'); t.value = link; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); showToast('Link copied!', 'success'); });
+        }
+        function closeInfoModal() { document.getElementById('infoModal').classList.remove('show'); }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('nav-home').classList.remove('active');
+            document.getElementById('nav-history').classList.remove('active');
+            if (tab === 'home') { document.getElementById('nav-home').classList.add('active'); document.getElementById('pageTitle').innerText = "Watch Video Stories Online"; document.getElementById('sectionHeading').innerText = "Recent Uploads"; document.getElementById('clearHistoryBtn').style.display = 'none'; }
+            else { document.getElementById('nav-history').classList.add('active'); document.getElementById('pageTitle').innerText = "My Watch History"; document.getElementById('sectionHeading').innerText = "Unlocked Videos"; document.getElementById('clearHistoryBtn').style.display = 'inline-block'; }
+            applyFilters();
+        }
+
+        function clearWatchHistory() {
+            if (!userWallet.unlockedVideos.length) { showToast('Already empty!', 'info'); return; }
+            if (confirm('Clear watch history?')) {
+                userWallet.unlockedVideos = []; saveWallet(auth.currentUser ? auth.currentUser.uid : 'guest'); applyFilters();
+                showToast('Cleared!', 'success');
+            }
+        }
+
+        async function fetchVideos() {
+            const stat = document.getElementById('statusBox'); stat.style.display = 'block'; stat.innerText = 'Fetching...';
+            try {
+                let merged = [];
+                for(let i=0; i<CONFIG.FOLDERS.length; i++) {
+                    let f = CONFIG.FOLDERS[i];
+                    let id = (f.link.match(/folders\/([a-zA-Z0-9_-]+)/) || [])[1] || f.link;
+                    let url = `https://www.googleapis.com/drive/v3/files?q='${id}'+in+parents+and+mimeType+contains+'video/'+and+trashed=false&fields=files(id,name,thumbnailLink,createdTime)&key=${CONFIG.API_KEY}&pageSize=100`;
+                    let r = await fetch(url); let d = await r.json();
+                    if(d.files) merged = merged.concat(d.files.map(v => ({...v, folderIndex: i, folderName: f.name})));
+                }
+                const seen = new Set(); allVideos = merged.filter(v => { if(seen.has(v.id)) return false; seen.add(v.id); return true; });
+                allVideos.sort((a,b) => (b.createdTime ? new Date(b.createdTime) : 0) - (a.createdTime ? new Date(a.createdTime) : 0));
+                
+                let html = `<a href="javascript:void(0)" onclick="filterCategory(-1); return false;" class="dropdown-item ${activeFilterIndex === -1 ? 'active' : ''}"><span>ALL VIDEOS</span>${activeFilterIndex === -1 ? '<span class="check">✓</span>' : ''}</a>`;
+                CONFIG.FOLDERS.forEach((f, i) => { html += `<a href="javascript:void(0)" onclick="filterCategory(${i}); return false;" class="dropdown-item ${activeFilterIndex === i ? 'active' : ''}"><span>${f.name}</span>${activeFilterIndex === i ? '<span class="check">✓</span>' : ''}</a>`; });
+                document.getElementById('filterDropdown').innerHTML = html;
+                updateCategoryButtonText(); applyFilters();
+            } catch(e) { stat.innerText = 'Error: ' + e.message; }
+        }
+
+        function updateCategoryButtonText() {
+            const btn = document.getElementById('categoryBtn'); const span = btn.querySelector('.cat-text');
+            if (!span) return;
+            span.textContent = activeFilterIndex === -1 ? '📂 Categories' : `📂 ${CONFIG.FOLDERS[activeFilterIndex]?.name || 'Categories'}`;
+        }
+
+        function filterCategory(idx) { activeFilterIndex = idx; document.getElementById('filterDropdown').classList.remove('show'); updateCategoryButtonText(); applyFilters(); }
+        function handleSearch() { searchQuery = document.getElementById('searchInput').value.toLowerCase(); applyFilters(); }
+
+        function applyFilters() {
+            let list = currentTab === 'history' ? allVideos.filter(v => userWallet.unlockedVideos.includes(v.id)) : allVideos;
+            if(activeFilterIndex > -1) list = list.filter(v => v.folderIndex === activeFilterIndex);
+            if(searchQuery) list = list.filter(v => v.name.toLowerCase().includes(searchQuery));
+            renderGrid(list);
+        }
+
+        function renderGrid(videos) {
+            const grid = document.getElementById('videoGrid'), stat = document.getElementById('statusBox'), bge = document.getElementById('videoCountBadge');
+            grid.innerHTML = '';
+            if(!videos.length) { stat.style.display = 'block'; stat.innerText = currentTab === 'history' ? 'No history. Start watching!' : 'No videos.'; bge.style.display='none'; return; }
+            stat.style.display = 'none'; bge.style.display = 'inline-block'; bge.innerText = videos.length + ' Videos';
+            videos.forEach(v => {
+                const unl = userWallet.unlockedVideos.includes(v.id);
+                const thumb = `https://lh3.googleusercontent.com/d/${v.id}=w600`;
+                let name = v.name; try { name = decodeURIComponent(v.name); } catch(e){}
+                let card = document.createElement('div'); card.className = 'video-card';
+                card.onclick = () => {
+                    if(unl) openPlayer(v.id);
+                    else {
+                        if(userWallet.coins >= VIDEO_COST) {
+                            pendingUnlockVideo = { id: v.id, title: name };
+                            document.getElementById('unlockVideoTitle').innerText = name;
+                            document.getElementById('unlockCostDisplay').innerText = VIDEO_COST + ' Coins';
+                            document.getElementById('unlockModal').classList.add('show');
+                        } else { showToast('Not enough coins!', 'error'); openCoinModal(); }
+                    }
+                };
+                card.innerHTML = `<div class="thumb-box">${!unl ? `<div class="cost-badge">🪙 ${VIDEO_COST}</div>` : ''}<img src="${thumb}" class="thumb-img" loading="lazy" onerror="this.src='${v.thumbnailLink||''}'"><div class="play-overlay"><div class="play-circle">${unl ? '▶' : '🔒'}</div></div></div>
+                    <div class="card-body"><div class="video-title">${name}</div><div class="card-meta"><span>${v.folderName||'Folder'}</span><span style="color:#ff9000;font-weight:bold">${unl?'Watch Now':'Unlock'}</span></div></div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        document.getElementById('confirmUnlockBtn').onclick = () => {
+            if(pendingUnlockVideo && userWallet.coins >= VIDEO_COST) {
+                userWallet.coins -= VIDEO_COST; userWallet.unlockedVideos.push(pendingUnlockVideo.id);
+                const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
+                updateWalletDisplay(uid);
+                addCoinHistory('spend', VIDEO_COST, `Unlocked: ${pendingUnlockVideo.title.substring(0,40)}...`, uid);
+                database.ref('videoAnalytics/' + pendingUnlockVideo.id).transaction(c => {
+                    const cur = c || { name: pendingUnlockVideo.title, unlockCount: 0 };
+                    cur.unlockCount = (cur.unlockCount || 0) + 1;
+                    cur.name = pendingUnlockVideo.title;
+                    return cur;
+                });
+                closeUnlockModal(); showToast('Unlocked!', 'success'); applyFilters(); openPlayer(pendingUnlockVideo.id);
+            }
+        };
+        function closeUnlockModal() { document.getElementById('unlockModal').classList.remove('show'); pendingUnlockVideo = null; }
+
+        function openPlayer(id) {
+            document.getElementById('playerBox').innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" allowfullscreen allow="autoplay"></iframe>`;
+            document.getElementById('playerModal').classList.add('show');
+        }
+        function closePlayer() { document.getElementById('playerBox').innerHTML=''; document.getElementById('playerModal').classList.remove('show'); }
+        async function toggleRotation() { let m = document.getElementById('playerModal'); if(!document.fullscreenElement) { if(m.requestFullscreen) m.requestFullscreen(); if(screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); } else { if(document.exitFullscreen) document.exitFullscreen(); if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } }
+
+        function initiatePayment(coins, basePrice, packName) {
+            closeCoinModal();
+            document.getElementById('checkoutPackName').innerText = packName + ` (${coins} Coins)`;
+            document.getElementById('checkoutModal').classList.add('show');
+            if(paymentTimer) clearInterval(paymentTimer); if(backendTimer) clearTimeout(backendTimer);
+            if(currentPaymentRefKey) database.ref("payments/" + currentPaymentRefKey).off();
+            let fee = parseFloat(((Math.random() * 0.98) + 0.01).toFixed(2));
+            let total = (basePrice + fee).toFixed(2);
+            let autoUserId = auth.currentUser ? auth.currentUser.uid : 'USER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            document.getElementById("displayBase").innerText = `₹${basePrice.toFixed(2)}`;
+            document.getElementById("displayFee").innerText = `₹${fee.toFixed(2)}`;
+            document.getElementById("displayTotal").innerText = `₹${total}`;
+            let ref = database.ref("payments").push();
+            currentPaymentRefKey = ref.key;
+            ref.set({ amount: total, status: "Pending", userId: autoUserId, coinsToGive: coins, createdAt: firebase.database.ServerValue.TIMESTAMP });
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: `upi://pay?pa=${currentUpiId}&am=${total}`, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff" });
+            document.getElementById('currentUpiDisplay').innerText = currentUpiId;
+            let time = 120;
+            document.getElementById('checkoutStatus').innerHTML = '<div class="pulse-dot"></div> Listening...';
+            document.getElementById('checkoutStatus').style.color = "#8b9bb4";
+            paymentTimer = setInterval(() => {
+                time--; let m = Math.floor(time / 60), s = time % 60;
+                document.getElementById("timerDisplay").innerText = "0" + m + ":" + String(s).padStart(2, '0');
+                if (time <= 0) { clearInterval(paymentTimer); document.getElementById('checkoutStatus').innerText = "QR Expired."; document.getElementById('checkoutStatus').style.color = "#ff4d4d"; }
+            }, 1000);
+            backendTimer = setTimeout(() => database.ref("payments/" + ref.key).remove(), 125000);
+            ref.on("value", (snap) => {
+                const data = snap.val();
+                if (data && data.status === "Paid") {
+                    clearInterval(paymentTimer); clearTimeout(backendTimer); ref.off();
+                    database.ref("history/" + ref.key).set({ ...data, completedAt: firebase.database.ServerValue.TIMESTAMP });
+                    database.ref("payments/" + ref.key).remove();
+                    userWallet.coins += parseInt(data.coinsToGive);
+                    const uid = auth.currentUser ? auth.currentUser.uid : 'guest';
+                    updateWalletDisplay(uid);
+                    addCoinHistory('purchase', data.coinsToGive, `Purchased ${data.coinsToGive} coins`, uid);
+                    database.ref('referrals/' + data.userId).once('value').then(refSnap => {
+                        const refData = refSnap.val();
+                        if (refData && !refData.bonusPaid) {
+                            const bonus = Math.floor(data.coinsToGive * 0.5);
+                            if (bonus > 0) {
+                                database.ref('referralEarnings/' + refData.referrerId).transaction(c => (c || 0) + bonus);
+                                database.ref('referrals/' + data.userId).update({ bonusPaid: true });
+                                showToast(`Referral: ${bonus} coins sent!`, 'success');
+                            }
+                        }
+                    });
+                    closeCheckoutModal();
+                    showToast(`✅ Added ${data.coinsToGive} Coins!`, 'success');
+                    setTimeout(() => downloadPDFReceipt(data.amount, ref.key, data.userId), 500);
+                }
+            });
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.remove('show');
+            if(paymentTimer) clearInterval(paymentTimer); if(backendTimer) clearTimeout(backendTimer);
+            if(currentPaymentRefKey) { database.ref("payments/" + currentPaymentRefKey).off(); database.ref("payments/" + currentPaymentRefKey).remove(); }
+        }
+
+        function downloadQR() {
+            let qrCanvas = document.querySelector("#qrcode canvas"), qrImg = document.querySelector("#qrcode img");
+            let source = qrCanvas || qrImg; if(!source) return;
+            let padding = 25, width = source.width || 180, height = source.height || 180;
+            let c = document.createElement("canvas"); c.width = width + padding*2; c.height = height + padding*2;
+            let ctx = c.getContext("2d"); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, c.width, c.height);
+            if(qrCanvas) ctx.drawImage(qrCanvas, padding, padding); else if(qrImg) ctx.drawImage(qrImg, padding, padding, width, height);
+            let a = document.createElement("a"); a.href = c.toDataURL("image/png"); a.download = "NIGHTSHOW_UPI.png"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+
+        // ============================================================
+        // ============ ATTRACTIVE PDF RECEIPT (FINAL) ===============
+        // NIGHT = White text, SHOW = Orange text (no box)
+        // ============================================================
+        function downloadPDFReceipt(totalAmount, transactionId, userId) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageW = doc.internal.pageSize.getWidth();
+            const pageH = doc.internal.pageSize.getHeight();
+            
+            // DARK BACKGROUND
+            doc.setFillColor(12, 10, 8);
+            doc.rect(0, 0, pageW, pageH, 'F');
+            
+            // Top orange bars
+            doc.setFillColor(255, 144, 0);
+            doc.rect(0, 0, pageW, 3, 'F');
+            doc.setFillColor(255, 190, 0);
+            doc.rect(0, 3, pageW, 1, 'F');
+            
+            // Bottom orange bar
+            doc.setFillColor(255, 144, 0);
+            doc.rect(0, pageH - 3, pageW, 3, 'F');
+            
+            // Decorative glow circle
+            doc.setFillColor(22, 17, 12);
+            doc.circle(pageW / 2, 55, 35, 'F');
+            
+            // ============ LOGO: NIGHT (white) + SHOW (orange text, no box) ============
+            const nightText = "NIGHT";
+            const showText = "SHOW";
+            const fontSize = 28;
+            const gap = 8;
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(fontSize);
+            
+            const nightWidth = doc.getTextWidth(nightText);
+            const showWidth = doc.getTextWidth(showText);
+            const totalLogoW = nightWidth + gap + showWidth;
+            const logoStartX = (pageW - totalLogoW) / 2;
+            const textBaselineY = 40;
+            
+            // "NIGHT" - WHITE text
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(fontSize);
+            doc.setFont("helvetica", "bold");
+            doc.text(nightText, logoStartX, textBaselineY);
+            
+            // "SHOW" - ORANGE text (no box)
+            doc.setTextColor(255, 144, 0);
+            doc.setFontSize(fontSize);
+            doc.setFont("helvetica", "bold");
+            doc.text(showText, logoStartX + nightWidth + gap, textBaselineY);
+            
+            // Tagline
+            doc.setTextColor(160, 160, 160);
+            doc.setFontSize(7.5);
+            doc.setFont("helvetica", "normal");
+            doc.text("P  A  Y  M  E  N  T     R  E  C  E  I  P  T", pageW / 2, 52, { align: "center" });
+            
+            // Success checkmark
+            const successY = 68;
+            doc.setFillColor(0, 200, 100);
+            doc.circle(pageW / 2, successY, 10, 'F');
+            
+            doc.setDrawColor(255, 255, 255);
+            doc.setLineWidth(2);
+            doc.line(pageW / 2 - 4, successY + 0.5, pageW / 2 - 1, successY + 4);
+            doc.line(pageW / 2 - 1, successY + 4, pageW / 2 + 5, successY - 3);
+            
+            doc.setTextColor(0, 220, 110);
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("PAYMENT SUCCESSFUL", pageW / 2, successY + 20, { align: "center" });
+            
+            // Main border box
+            const boxX = 15;
+            const boxY = 100;
+            const boxW = pageW - 30;
+            const boxH = 128;
+            
+            doc.setFillColor(35, 28, 20);
+            doc.roundedRect(boxX - 1.5, boxY - 1.5, boxW + 3, boxH + 3, 7, 7, 'F');
+            
+            doc.setFillColor(22, 18, 14);
+            doc.roundedRect(boxX, boxY, boxW, boxH, 6, 6, 'F');
+            
+            doc.setDrawColor(255, 200, 0);
+            doc.setLineWidth(1.2);
+            doc.roundedRect(boxX, boxY, boxW, boxH, 6, 6, 'S');
+            
+            doc.setDrawColor(255, 144, 0);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(boxX + 2.5, boxY + 2.5, boxW - 5, boxH - 5, 5, 5, 'S');
+            
+            doc.setFillColor(255, 200, 0);
+            doc.circle(boxX + 2, boxY + 2, 1.5, 'F');
+            doc.circle(boxX + boxW - 2, boxY + 2, 1.5, 'F');
+            doc.circle(boxX + 2, boxY + boxH - 2, 1.5, 'F');
+            doc.circle(boxX + boxW - 2, boxY + boxH - 2, 1.5, 'F');
+            
+            const now = new Date();
+            const dateStr = now.toLocaleString('en-IN', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            
+            const rows = [
+                { label: "AMOUNT PAID",     value: "Rs. " + totalAmount,                                         type: "amount" },
+                { label: "TRANSACTION ID",  value: String(transactionId).substring(0, 22) },
+                { label: "USER ID",         value: String(userId).substring(0, 22) + (String(userId).length > 22 ? '..' : '') },
+                { label: "DATE & TIME",     value: dateStr },
+                { label: "PAYMENT METHOD",  value: "UPI" },
+                { label: "STATUS",          value: "COMPLETED", type: "status" }
+            ];
+            
+            let yPos = boxY + 21;
+            const rowH = 17;
+            const leftX = boxX + 12;
+            const rightX = boxX + boxW - 12;
+            
+            rows.forEach((row, i) => {
+                doc.setTextColor(150, 145, 135);
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.text(row.label, leftX, yPos);
+                
+                if (row.type === "amount") {
+                    doc.setTextColor(255, 200, 0);
+                    doc.setFontSize(15);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(row.value, rightX, yPos, { align: "right" });
+                } else if (row.type === "status") {
+                    doc.setTextColor(0, 220, 110);
+                    doc.setFontSize(11);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(row.value, rightX, yPos, { align: "right" });
+                } else {
+                    doc.setTextColor(245, 245, 245);
+                    doc.setFontSize(10);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(row.value, rightX, yPos, { align: "right" });
+                }
+                
+                if (i < rows.length - 1) {
+                    doc.setDrawColor(55, 45, 35);
+                    doc.setLineWidth(0.2);
+                    doc.line(leftX, yPos + 6, rightX, yPos + 6);
+                }
+                
+                yPos += rowH;
+            });
+            
+            // Footer
+            doc.setDrawColor(255, 144, 0);
+            doc.setLineWidth(0.5);
+            doc.line(20, pageH - 40, pageW - 20, pageH - 40);
+            
+            doc.setTextColor(150, 150, 150);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text("Thank you for choosing Night Show!", pageW / 2, pageH - 28, { align: "center" });
+            
+            doc.setTextColor(255, 144, 0);
+            doc.setFontSize(7.5);
+            doc.setFont("helvetica", "bold");
+            doc.text("www.nightshow.com   |   support@nightshow.com", pageW / 2, pageH - 18, { align: "center" });
+            
+            doc.setFillColor(255, 200, 0);
+            doc.circle(pageW / 2 - 15, pageH - 10, 1, 'F');
+            doc.setFillColor(255, 144, 0);
+            doc.circle(pageW / 2, pageH - 10, 1.5, 'F');
+            doc.setFillColor(255, 200, 0);
+            doc.circle(pageW / 2 + 15, pageH - 10, 1, 'F');
+            
+            const ts = Date.now();
+            doc.save('NightShow_Receipt_' + ts + '.pdf');
+        }
+        // ============================================================
+    </script>
+
+    <script>
+    (function () {
+        const OVERLAY_IDS = ['checkoutModal','coinModal','unlockModal','playerModal','infoModal','coinHistoryModal','couponModal','supportModal','drawerOverlay','filterDropdown','searchBarBox'];
+        function isOpen(id) { const el = document.getElementById(id); return !!el && el.classList.contains('show'); }
+        function topOverlay() { for (let i = 0; i < OVERLAY_IDS.length; i++) { if (isOpen(OVERLAY_IDS[i])) return OVERLAY_IDS[i]; } return null; }
+        function closeOverlay(id) {
+            try {
+                if (id === 'checkoutModal') closeCheckoutModal();
+                else if (id === 'coinModal') closeCoinModal();
+                else if (id === 'unlockModal') closeUnlockModal();
+                else if (id === 'playerModal') closePlayer();
+                else if (id === 'infoModal') closeInfoModal();
+                else if (id === 'coinHistoryModal') closeCoinHistory();
+                else if (id === 'couponModal') closeCouponModal();
+                else if (id === 'supportModal') closeSupportModal();
+                else if (id === 'drawerOverlay') toggleDrawer();
+                else if (id === 'filterDropdown') document.getElementById('filterDropdown').classList.remove('show');
+                else if (id === 'searchBarBox') toggleSearch();
+            } catch (e) {}
+        }
+        let guardActive = false, ignoreNextPop = false;
+        function addGuard() { if (!guardActive) { guardActive = true; try { history.pushState({ nsBackGuard: true }, ''); } catch (e) { guardActive = false; } } }
+        function removeGuard() { if (guardActive) { guardActive = false; ignoreNextPop = true; try { history.back(); } catch (e) { ignoreNextPop = false; } } }
+        function syncGuard() { if (topOverlay()) addGuard(); else if (guardActive) removeGuard(); }
+        const observer = new MutationObserver(syncGuard);
+        OVERLAY_IDS.forEach(function (id) { const el = document.getElementById(id); if (el) observer.observe(el, { attributes: true, attributeFilter: ['class'] }); });
+        window.addEventListener('popstate', function () {
+            if (ignoreNextPop) { ignoreNextPop = false; if (topOverlay()) addGuard(); return; }
+            if (document.fullscreenElement) { guardActive = false; try { document.exitFullscreen(); } catch (e) {} if (topOverlay()) addGuard(); return; }
+            const top = topOverlay();
+            if (top) { guardActive = false; closeOverlay(top); if (topOverlay()) addGuard(); }
+        });
+    })();
+    </script>
+</body>
+</html>
